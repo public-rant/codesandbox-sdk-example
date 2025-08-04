@@ -1,0 +1,13 @@
+{
+  "setupTasks": ["npm install"],
+  "tasks": {
+    "dev-server": {
+      "name": "Dev Server",
+      "command": "cd app && npm run dev",
+      "preview": {
+        "port": 5173
+      },
+      "runAtStart": true
+    }
+  }
+}
