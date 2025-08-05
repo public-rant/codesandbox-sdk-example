@@ -1,42 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 
-interface LoginFormProps {
-  onLogin: (user: { id: string; username: string; role: string }) => void;
-}
-
-export default function LoginForm({ onLogin }: LoginFormProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+export default function LoginForm() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, loading, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
+    
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        onLogin(data.user);
-      } else {
-        setError(data.error || 'Login failed');
-      }
+      await login(username, password);
     } catch (err) {
-      setError('Network error occurred');
-    } finally {
-      setLoading(false);
+      // Error is handled by the useAuth hook
     }
   };
 
@@ -44,7 +22,9 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Welcome Back
+          </h1>
           <p className="text-gray-600">Sign in to your account</p>
         </div>
 
@@ -56,7 +36,10 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Username
             </label>
             <input
@@ -70,7 +53,10 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Password
             </label>
             <input
@@ -88,14 +74,17 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
             disabled={loading}
             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm font-medium text-gray-700 mb-2">Demo Account:</p>
+          <p className="text-sm font-medium text-gray-700 mb-2">
+            Demo Account:
+          </p>
           <div className="space-y-1 text-sm text-gray-600">
-            <div>User: username "user", password "password"</div>
+            <div>User: GITHUB_USERNAME, Password: "password"</div>
+            <div className="text-orange-600 font-medium">Requires GITHUB_TOKEN env var to be set</div>
           </div>
         </div>
       </div>

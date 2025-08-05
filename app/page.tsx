@@ -1,71 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import LoginForm from './components/LoginForm';
 import CreateProjectModal from './components/CreateProjectModal';
-
-interface Project {
-  id: string;
-  name: string;
-  createdAt: string;
-}
-
-interface User {
-  id: string;
-  username: string;
-  role: string;
-}
+import { useAuth } from './hooks/useAuth';
+import { useProjects } from './hooks/useProjects';
 
 export default function Home() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
+  
+  const { user, loading: authLoading, logout } = useAuth();
+  const { projects, loading: projectsLoading, fetchProjects } = useProjects();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData.user);
-        fetchProjects();
-      } else {
-        setLoading(false);
-      }
-    } catch (err) {
-      setLoading(false);
-    }
-  };
-
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch('/api/projects');
-      const data = await response.json();
-      setProjects(data);
-    } catch (err) {
-      console.error('Failed to fetch projects:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogin = (userData: User) => {
-    setUser(userData);
-    fetchProjects();
-  };
+  const loading = authLoading || (user && projectsLoading);
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      setProjects([]);
+      await logout();
     } catch (err) {
       console.error('Logout failed:', err);
     }
@@ -89,7 +43,7 @@ export default function Home() {
   }
 
   if (!user) {
-    return <LoginForm onLogin={handleLogin} />;
+    return <LoginForm />;
   }
 
   return (

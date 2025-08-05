@@ -4,18 +4,23 @@ import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useProject } from '../../hooks/useProject';
-import { useSandboxManager } from '../../hooks/useSandboxManager';
+import { useSandboxContext } from '../../contexts/SandboxContext';
+import { useSandboxTasks } from '../../hooks/useSandboxTasks.v2';
+import { useSandboxPreview } from '../../hooks/useSandboxPreview.v2';
 
-export default function ProjectPage() {
+export default function ProjectPageV2() {
   const params = useParams();
   const projectId = params.id as string;
   
   const { project, loading, error } = useProject(projectId);
   const {
     sandbox,
-    sandboxLoading,
+    loading: sandboxLoading,
     setupState,
     connectToSandboxInstance,
+  } = useSandboxContext();
+  
+  const {
     devServerTask,
     vscodeTask,
     taskLoading,
@@ -26,17 +31,47 @@ export default function ProjectPage() {
     startVscode,
     restartVscode,
     stopVscode,
+  } = useSandboxTasks();
+
+  const {
     previewState,
     vscodeState,
     previewContainerRef,
     vscodeContainerRef,
-  } = useSandboxManager();
+    createSandboxPreview,
+    createVscodePreview,
+    destroyPreview,
+    destroyVscodePreview,
+  } = useSandboxPreview();
 
+  // Connect to sandbox when project is loaded
   useEffect(() => {
     if (project?.sandboxId && !sandbox) {
       connectToSandboxInstance(project.id, project.sandboxId);
     }
   }, [project, sandbox, connectToSandboxInstance]);
+
+  // Auto-create preview when dev server port becomes active and setup is finished
+  useEffect(() => {
+    if (sandbox && devServerTask.portActive && !previewState.preview && !previewState.loading && setupState.status === 'FINISHED') {
+      console.log('🎬 Port is active and setup finished, creating preview...');
+      createSandboxPreview();
+    } else if (!devServerTask.portActive && previewState.preview) {
+      console.log('🛑 Port is inactive, destroying preview...');
+      destroyPreview();
+    }
+  }, [sandbox, devServerTask.portActive, previewState.preview, previewState.loading, setupState.status, createSandboxPreview, destroyPreview]);
+
+  // Auto-create VSCode when port becomes active and setup is finished
+  useEffect(() => {
+    if (sandbox && vscodeTask.portActive && !vscodeState.preview && !vscodeState.loading && setupState.status === 'FINISHED') {
+      console.log('🎬 VSCode port is active and setup finished, creating VSCode preview...');
+      createVscodePreview();
+    } else if (!vscodeTask.portActive && vscodeState.preview) {
+      console.log('🛑 VSCode port is inactive, destroying VSCode preview...');
+      destroyVscodePreview();
+    }
+  }, [sandbox, vscodeTask.portActive, vscodeState.preview, vscodeState.loading, setupState.status, createVscodePreview, destroyVscodePreview]);
 
   if (loading) {
     return (
@@ -147,9 +182,18 @@ export default function ProjectPage() {
 
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Context-Based Architecture Benefits Display */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="text-lg font-semibold text-blue-900 mb-2">🔄 Context-Based Architecture</h3>
+          <p className="text-blue-800 text-sm">
+            This page now uses a Context-based architecture where the Sandbox Client instance is shared across hooks through SandboxProvider.
+            Benefits include centralized state management, reduced prop drilling, and efficient event handling.
+          </p>
+        </div>
+
         {/* Two Column Layout */}
         {sandbox && (
-          <div className="grid grid-cols-2 gap-6 h-[calc(100vh-200px)]">
+          <div className="grid grid-cols-2 gap-6 h-[calc(100vh-280px)]">
             {/* VSCode Column */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
               <div className="flex items-center justify-between mb-6">
@@ -193,7 +237,6 @@ export default function ProjectPage() {
                         onClick={startVscode}
                         disabled={vscodeTaskLoading || setupState.status === 'RUNNING'}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={setupState.status === 'RUNNING' ? 'Setup is running, please wait...' : ''}
                       >
                         {vscodeTaskLoading ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -202,39 +245,22 @@ export default function ProjectPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h1m4 0h1M12 4l6 8H6l6-8z" />
                           </svg>
                         )}
-                        {setupState.status === 'RUNNING' ? 'Waiting for Setup...' : 'Start VSCode'}
+                        Start VSCode
                       </button>
                     ) : (
                       <>
                         <button
                           onClick={restartVscode}
-                          disabled={vscodeTaskLoading || setupState.status === 'RUNNING'}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={setupState.status === 'RUNNING' ? 'Setup is running, please wait...' : ''}
+                          disabled={vscodeTaskLoading}
+                          className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50"
                         >
-                          {vscodeTaskLoading ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          ) : (
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                          )}
                           Restart
                         </button>
                         <button
                           onClick={stopVscode}
-                          disabled={vscodeTaskLoading || setupState.status === 'RUNNING'}
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={setupState.status === 'RUNNING' ? 'Setup is running, please wait...' : ''}
+                          disabled={vscodeTaskLoading}
+                          className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50"
                         >
-                          {vscodeTaskLoading ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          ) : (
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h6v4H9z" />
-                            </svg>
-                          )}
                           Stop
                         </button>
                       </>
@@ -248,7 +274,7 @@ export default function ProjectPage() {
                   ref={vscodeContainerRef}
                   className="w-full h-full bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
                 >
-                  {/* Loading state */}
+                  {/* Loading and status messages similar to original */}
                   {vscodeState.loading && (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
@@ -258,54 +284,7 @@ export default function ProjectPage() {
                     </div>
                   )}
                   
-                  {/* Port closed message */}
-                  {vscodeState.portClosed && !vscodeState.loading && (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <svg className="w-12 h-12 text-orange-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Port Disconnected</h3>
-                        <p className="text-gray-600">The VSCode server port has closed.</p>
-                        <p className="text-sm text-gray-500 mt-1">VSCode will reload automatically when the port reopens.</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Setup running */}
-                  {setupState.status === 'RUNNING' && !vscodeState.loading && (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Setting up Sandbox</h3>
-                        <p className="text-gray-600">Please wait while the sandbox is being configured...</p>
-                        {setupState.currentStepName && (
-                          <p className="text-sm text-gray-500 mt-2">
-                            Current step: {setupState.currentStepName}
-                          </p>
-                        )}
-                        {setupState.totalSteps > 0 && (
-                          <p className="text-sm text-gray-500 mt-1">
-                            Step {setupState.currentStepIndex + 1} of {setupState.totalSteps}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* VSCode initial loading state */}
-                  {vscodeTask.status === 'LOADING' && !vscodeState.loading && (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Checking VSCode Status</h3>
-                        <p className="text-gray-600">Please wait while we check the VSCode server status...</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* VSCode task not running */}
-                  {setupState.status !== 'RUNNING' && !vscodeTask.portActive && !vscodeState.loading && !vscodeState.portClosed && vscodeTask.status !== 'LOADING' && (
+                  {!vscodeTask.portActive && !vscodeState.loading && setupState.status === 'FINISHED' && (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
                         <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,7 +304,6 @@ export default function ProjectPage() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Development Preview</h2>
                 <div className="flex items-center space-x-4">
-                  {/* Dev Server Status */}
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600">Server:</span>
                     <div className={`w-2 h-2 rounded-full ${
@@ -362,7 +340,6 @@ export default function ProjectPage() {
                         onClick={startDevServer}
                         disabled={taskLoading || setupState.status === 'RUNNING'}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={setupState.status === 'RUNNING' ? 'Setup is running, please wait...' : ''}
                       >
                         {taskLoading ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -371,60 +348,24 @@ export default function ProjectPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h1m4 0h1M12 4l6 8H6l6-8z" />
                           </svg>
                         )}
-                        {setupState.status === 'RUNNING' ? 'Waiting for Setup...' : 'Start Dev Server'}
+                        Start Dev Server
                       </button>
                     ) : (
                       <>
                         <button
                           onClick={restartDevServer}
-                          disabled={taskLoading || setupState.status === 'RUNNING'}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={setupState.status === 'RUNNING' ? 'Setup is running, please wait...' : ''}
+                          disabled={taskLoading}
+                          className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                         >
-                          {taskLoading ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          ) : (
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                          )}
                           Restart
                         </button>
                         <button
                           onClick={stopDevServer}
-                          disabled={taskLoading || setupState.status === 'RUNNING'}
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={setupState.status === 'RUNNING' ? 'Setup is running, please wait...' : ''}
+                          disabled={taskLoading}
+                          className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
                         >
-                          {taskLoading ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          ) : (
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h6v4H9z" />
-                            </svg>
-                          )}
                           Stop
                         </button>
-                        {previewState.connected && previewState.preview && (
-                          <button
-                            onClick={() => {
-                              if (previewState.preview?.iframe && sandbox) {
-                                const currentSrc = previewState.preview.iframe.src;
-                                previewState.preview.iframe.src = '';
-                                setTimeout(() => {
-                                  previewState.preview.iframe.src = currentSrc;
-                                }, 10);
-                              }
-                            }}
-                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm flex items-center"
-                          >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Reload Preview
-                          </button>
-                        )}
                       </>
                     )}
                   </div>
@@ -436,7 +377,6 @@ export default function ProjectPage() {
                   ref={previewContainerRef}
                   className="w-full h-full bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
                 >
-                  {/* Loading state */}
                   {previewState.loading && (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
@@ -446,43 +386,7 @@ export default function ProjectPage() {
                     </div>
                   )}
                   
-                  {/* Port closed message */}
-                  {previewState.portClosed && !previewState.loading && (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <svg className="w-12 h-12 text-orange-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Port Disconnected</h3>
-                        <p className="text-gray-600">The development server port has closed.</p>
-                        <p className="text-sm text-gray-500 mt-1">Preview will reload automatically when the port reopens.</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Setup running */}
-                  {setupState.status === 'RUNNING' && !previewState.loading && (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Setting up Sandbox</h3>
-                        <p className="text-gray-600">Please wait while the sandbox is being configured...</p>
-                        {setupState.currentStepName && (
-                          <p className="text-sm text-gray-500 mt-2">
-                            Current step: {setupState.currentStepName}
-                          </p>
-                        )}
-                        {setupState.totalSteps > 0 && (
-                          <p className="text-sm text-gray-500 mt-1">
-                            Step {setupState.currentStepIndex + 1} of {setupState.totalSteps}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Dev server not running */}
-                  {setupState.status !== 'RUNNING' && !devServerTask.portActive && !previewState.loading && !previewState.portClosed && (
+                  {!devServerTask.portActive && !previewState.loading && setupState.status === 'FINISHED' && (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
                         <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

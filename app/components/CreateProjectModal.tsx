@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useProjectCreation } from '../hooks/useProjectCreation';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -8,80 +9,25 @@ interface CreateProjectModalProps {
   onProjectCreated: (projectId: string) => void;
 }
 
-interface ProgressStep {
-  id: string;
-  message: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'error';
-}
-
 export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }: CreateProjectModalProps) {
   const [projectName, setProjectName] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [progress, setProgress] = useState<ProgressStep[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const { isCreating, progress, error, createProjectWithStream, resetCreation } = useProjectCreation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!projectName.trim()) {
-      setError('Project name is required');
-      return;
-    }
-
-    setIsCreating(true);
-    setError(null);
-    setProgress([]);
-
     try {
-      // Start listening to progress events
-      const eventSource = new EventSource(`/api/projects/create-stream?name=${encodeURIComponent(projectName.trim())}`);
-      
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'progress') {
-          setProgress(prev => {
-            const newProgress = [...prev];
-            const existingIndex = newProgress.findIndex(step => step.id === data.step.id);
-            
-            if (existingIndex >= 0) {
-              newProgress[existingIndex] = data.step;
-            } else {
-              newProgress.push(data.step);
-            }
-            
-            return newProgress;
-          });
-        } else if (data.type === 'success') {
-          eventSource.close();
-          setIsCreating(false);
-          onProjectCreated(data.projectId);
-        } else if (data.type === 'error') {
-          eventSource.close();
-          setIsCreating(false);
-          setError(data.message);
-        }
-      };
-
-      eventSource.onerror = () => {
-        eventSource.close();
-        setIsCreating(false);
-        setError('Connection to server lost. Please try again.');
-        // Note: Progress is preserved and will remain visible
-      };
-
+      const projectId = await createProjectWithStream(projectName);
+      onProjectCreated(projectId);
     } catch (err) {
-      setIsCreating(false);
-      setError('Failed to create project. Please try again.');
-      // Note: Progress is preserved and will remain visible
+      // Error is handled by the useProjectCreation hook
     }
   };
 
   const handleClose = () => {
     if (!isCreating) {
       setProjectName('');
-      setProgress([]);
-      setError(null);
+      resetCreation();
       onClose();
     }
   };
@@ -261,8 +207,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                   <button
                     type="button"
                     onClick={() => {
-                      setError(null);
-                      setProgress([]);
+                      resetCreation();
                       setProjectName('');
                     }}
                     style={{

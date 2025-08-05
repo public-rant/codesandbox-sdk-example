@@ -1,9 +1,10 @@
 import { addProject } from "../store";
-import { CodeSandbox } from "@codesandbox/sdk";
 import { Octokit } from "@octokit/rest";
 import { NextRequest } from "next/server";
 import { getAuthenticatedUser } from "../../auth/middleware";
 import { getUserById } from "../../auth/store";
+import { getCodeSandboxService } from "../../services/codesandbox";
+import { validateEnvironment, validateRequiredParams } from "../../utils/responses";
 
 interface ProgressStep {
   id: string;
@@ -18,13 +19,18 @@ function createProgressMessage(
   return `data: ${JSON.stringify({ type, ...data })}\n\n`;
 }
 
+/**
+ * GET /api/projects/create-stream
+ * Create a new project with GitHub repository and CodeSandbox integration
+ * Returns a Server-Sent Events stream for real-time progress updates
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const name = searchParams.get("name");
 
   if (!name || typeof name !== "string") {
     return new Response(
-      createProgressMessage("error", { message: "Name is required" }),
+      createProgressMessage("error", { message: "Project name is required and must be a non-empty string" }),
       {
         status: 400,
         headers: {
@@ -99,8 +105,11 @@ export async function GET(request: NextRequest) {
           return;
         }
 
-        if (!process.env.CSB_API_KEY) {
-          sendError("CodeSandbox API key is required", "auth");
+        // Validate environment variables
+        try {
+          validateEnvironment(['CSB_API_KEY']);
+        } catch (error) {
+          sendError(error instanceof Error ? error.message : "Environment validation failed", "auth");
           return;
         }
 
@@ -141,10 +150,8 @@ export async function GET(request: NextRequest) {
           status: "in_progress",
         });
 
-        const sdk = new CodeSandbox(process.env.CSB_API_KEY);
-        const sandbox = await sdk.sandboxes.create({
-          id: "sdk-example@latest",
-        });
+        const csbService = getCodeSandboxService();
+        const sandbox = await csbService.createSandbox("sdk-example@latest", "private");
 
         sendProgress({
           id: "sandbox-create",
@@ -159,14 +166,11 @@ export async function GET(request: NextRequest) {
           status: "in_progress",
         });
 
-        const client = await sandbox.connect({
+        const client = await csbService.connectToSandbox(sandbox, {
           id: user.username,
-          git: {
-            email: user.email,
-            username: user.username,
-            provider: "github.com",
-            accessToken: user.githubToken,
-          },
+          email: user.email,
+          username: user.username,
+          githubToken: user.githubToken,
         });
 
         sendProgress({
@@ -230,9 +234,7 @@ export async function GET(request: NextRequest) {
           status: "in_progress",
         });
 
-        const hostToken = await sdk.hosts.createToken(sandbox.id, {
-          expiresAt: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000), // 10 years expiration
-        });
+        const hostToken = await csbService.createHostToken(sandbox.id, 10); // 10 years expiration
 
         sendProgress({
           id: "host-token",

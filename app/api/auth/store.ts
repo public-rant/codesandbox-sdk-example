@@ -54,8 +54,6 @@ function saveSessions(sessions: Session[]): void {
   }
 }
 
-export const sessions: Session[] = loadSessions();
-
 export function findUser(username: string, password: string): User | undefined {
   return users.find(u => u.username === username && u.password === password);
 }
@@ -72,12 +70,14 @@ export function createSession(userId: string): Session {
     expiresAt: expiresAt.toISOString()
   };
 
+  const sessions = loadSessions();
   sessions.push(session);
   saveSessions(sessions);
   return session;
 }
 
 export function findSession(sessionId: string): Session | undefined {
+  const sessions = loadSessions();
   const session = sessions.find(s => s.id === sessionId);
   if (!session) return undefined;
 
@@ -91,6 +91,7 @@ export function findSession(sessionId: string): Session | undefined {
 }
 
 export function removeSession(sessionId: string): void {
+  const sessions = loadSessions();
   const index = sessions.findIndex(s => s.id === sessionId);
   if (index > -1) {
     sessions.splice(index, 1);

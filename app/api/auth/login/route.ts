@@ -20,6 +20,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!user.githubToken) {
+      return NextResponse.json(
+        { error: 'GitHub token not configured. Please set GITHUB_TOKEN environment variable.' },
+        { status: 500 }
+      );
+    }
+
     const session = createSession(user.id);
 
     const response = NextResponse.json({

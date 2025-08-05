@@ -1,5 +1,10 @@
 import { getProject } from "../store";
+import { createSuccessResponse, createErrorResponse, handleApiError } from "../../utils/responses";
 
+/**
+ * GET /api/projects/[id]
+ * Retrieve a specific project by ID with sandbox information
+ */
 export async function GET(
   _request: Request,
   { params }: { params: { id: string } }
@@ -7,18 +12,18 @@ export async function GET(
   try {
     const { id } = params;
 
+    if (!id) {
+      return createErrorResponse("Project ID is required", undefined, 400, "MISSING_ID");
+    }
+
     const project = await getProject(id);
 
     if (!project) {
-      return Response.json({ error: "Project not found" }, { status: 404 });
+      return createErrorResponse("Project not found", `No project found with ID: ${id}`, 404, "PROJECT_NOT_FOUND");
     }
 
-    return Response.json(project);
+    return createSuccessResponse(project, `Retrieved project ${project.name}`);
   } catch (error) {
-    console.error("Failed to get project:", error);
-    return Response.json(
-      { error: "Failed to get project" },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Get project');
   }
 }
