@@ -4,7 +4,7 @@ import { findSession, getUserById, User } from './store';
 export interface AuthenticatedUser {
   id: string;
   username: string;
-  role: 'user' | 'admin';
+  role: 'user';
 }
 
 export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
@@ -46,24 +46,3 @@ export function requireAuth(handler: (request: NextRequest, user: AuthenticatedU
   };
 }
 
-export function requireAdmin(handler: (request: NextRequest, user: AuthenticatedUser) => Promise<Response>) {
-  return async (request: NextRequest) => {
-    const user = await getAuthenticatedUser(request);
-    
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Admin access required' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    return handler(request, user);
-  };
-}

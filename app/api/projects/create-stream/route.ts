@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
 
         const sdk = new CodeSandbox(process.env.CSB_API_KEY);
         const sandbox = await sdk.sandboxes.create({
-          id: "sandbox-template@latest",
+          id: "sdk-example@latest",
         });
 
         sendProgress({

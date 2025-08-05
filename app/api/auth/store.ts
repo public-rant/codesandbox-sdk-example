@@ -5,7 +5,7 @@ export interface User {
   id: string;
   username: string;
   password: string;
-  role: 'user' | 'admin';
+  role: 'user';
   email: string;
   githubToken?: string;
 }
@@ -24,14 +24,6 @@ export const users: User[] = [
     password: 'password',
     role: 'user',
     email: 'user@example.com',
-    githubToken: process.env.GITHUB_TOKEN
-  },
-  {
-    id: '2',
-    username: process.env.GITHUB_USERNAME || 'admin',
-    password: 'admin',
-    role: 'admin',
-    email: 'admin@example.com',
     githubToken: process.env.GITHUB_TOKEN
   }
 ];

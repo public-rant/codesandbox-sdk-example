@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "template": "csb build ./sandbox-template --vm-tier Nano --vm-build-tier Micro --ports 5173 --alias latest"
+    "template": "csb build ./sandbox-template --vm-tier Nano --vm-build-tier Micro --ports 5173 --alias sdk-example@latest"
   },
   "dependencies": {
-    "@codesandbox/sdk": "^2.0.6-rc.2",
+    "@codesandbox/sdk": "^2.0.6-rc.1",
     "@octokit/rest": "^22.0.0",
     "next": "15.4.5",
     "react": "19.1.0",

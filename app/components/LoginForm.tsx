@@ -93,10 +93,9 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         </form>
 
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm font-medium text-gray-700 mb-2">Demo Accounts:</p>
+          <p className="text-sm font-medium text-gray-700 mb-2">Demo Account:</p>
           <div className="space-y-1 text-sm text-gray-600">
             <div>User: username "user", password "password"</div>
-            <div>Admin: username "admin", password "admin"</div>
           </div>
         </div>
       </div>

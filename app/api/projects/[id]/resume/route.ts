@@ -1,4 +1,4 @@
-import { getProject } from "../../store";
+import { getProject, updateProject } from "../../store";
 import { CodeSandbox } from "@codesandbox/sdk";
 import { NextRequest } from "next/server";
 import { getAuthenticatedUser } from "../../../auth/middleware";
@@ -45,6 +45,9 @@ export async function POST(
     const sdk = new CodeSandbox(process.env.CSB_API_KEY);
     const sandbox = await sdk.sandboxes.resume(project.sandboxId);
 
+    // Update project with current isUpToDate status
+    await updateProject(id, { isUpToDate: sandbox.isUpToDate });
+
     // Create new browser session
     const sandboxSession = await sandbox.createSession({
       id: user.username,
@@ -59,6 +62,7 @@ export async function POST(
 
     return Response.json({
       sandboxSession,
+      isUpToDate: sandbox.isUpToDate,
     });
   } catch (error) {
     console.error("Failed to resume sandbox:", error);

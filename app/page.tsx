@@ -116,11 +116,7 @@ export default function Home() {
                 <div className="text-sm">
                   <span className="text-gray-600">Welcome, </span>
                   <span className="font-medium text-gray-900">{user.username}</span>
-                  <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                    user.role === 'admin' 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
+                  <span className="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {user.role}
                   </span>
                 </div>

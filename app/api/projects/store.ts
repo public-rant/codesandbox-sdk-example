@@ -9,6 +9,7 @@ export interface Project {
   sandboxId: string;
   githubRepoUrl?: string;
   hostToken: HostToken;
+  isUpToDate?: boolean;
 }
 
 interface StoreData {
@@ -51,7 +52,8 @@ export async function addProject(name: string, sandboxId: string, hostToken: Hos
     createdAt: new Date().toISOString(),
     sandboxId,
     githubRepoUrl,
-    hostToken
+    hostToken,
+    isUpToDate: true
   };
 
   store.projects.push(project);
@@ -69,4 +71,17 @@ export async function getProject(id: string): Promise<Project | undefined> {
 export async function getAllProjects(): Promise<Project[]> {
   const store = await loadStore();
   return store.projects;
+}
+
+export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined> {
+  const store = await loadStore();
+  const projectIndex = store.projects.findIndex(p => p.id === id);
+  
+  if (projectIndex === -1) {
+    return undefined;
+  }
+  
+  store.projects[projectIndex] = { ...store.projects[projectIndex], ...updates };
+  await saveStore(store);
+  return store.projects[projectIndex];
 }
