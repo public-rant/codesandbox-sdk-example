@@ -20,7 +20,7 @@ export interface Session {
 export const users: User[] = [
   {
     id: '1',
-    username: 'user',
+    username: process.env.GITHUB_USERNAME || 'user',
     password: 'password',
     role: 'user',
     email: 'user@example.com',
@@ -28,7 +28,7 @@ export const users: User[] = [
   },
   {
     id: '2',
-    username: 'admin',
+    username: process.env.GITHUB_USERNAME || 'admin',
     password: 'admin',
     role: 'admin',
     email: 'admin@example.com',

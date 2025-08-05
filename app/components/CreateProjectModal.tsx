@@ -67,11 +67,13 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
         eventSource.close();
         setIsCreating(false);
         setError('Connection to server lost. Please try again.');
+        // Note: Progress is preserved and will remain visible
       };
 
     } catch (err) {
       setIsCreating(false);
       setError('Failed to create project. Please try again.');
+      // Note: Progress is preserved and will remain visible
     }
   };
 
@@ -112,7 +114,7 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
       }}>
         <h2 style={{ margin: '0 0 16px 0', color: '#1f2937', fontSize: '20px', fontWeight: '600' }}>Create New Project</h2>
         
-        {!isCreating ? (
+        {!isCreating && progress.length === 0 ? (
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '16px' }}>
               <label htmlFor="projectName" style={{ display: 'block', marginBottom: '4px', fontWeight: '600', color: '#374151' }}>
@@ -187,7 +189,9 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
           </form>
         ) : (
           <div>
-            <h3 style={{ margin: '0 0 16px 0', color: '#1f2937', fontSize: '18px', fontWeight: '600' }}>Creating "{projectName}"...</h3>
+            <h3 style={{ margin: '0 0 16px 0', color: '#1f2937', fontSize: '18px', fontWeight: '600' }}>
+              {isCreating ? `Creating "${projectName}"...` : `Project Creation ${error ? 'Failed' : 'Completed'}`}
+            </h3>
             <div style={{ maxHeight: '300px', overflow: 'auto' }}>
               {progress.map((step) => (
                 <div
@@ -232,6 +236,49 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
                 fontSize: '14px'
               }}>
                 {error}
+              </div>
+            )}
+
+            {!isCreating && (
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  style={{
+                    padding: '8px 16px',
+                    border: '1px solid #d1d5db',
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Close
+                </button>
+                {error && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError(null);
+                      setProgress([]);
+                      setProjectName('');
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      border: 'none',
+                      backgroundColor: '#4f46e5',
+                      color: 'white',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Try Again
+                  </button>
+                )}
               </div>
             )}
           </div>

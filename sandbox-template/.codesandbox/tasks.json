@@ -1,5 +1,5 @@
 {
-  "setupTasks": ["npm install"],
+  "setupTasks": ["cd app && npm install"],
   "tasks": {
     "dev-server": {
       "name": "Dev Server",

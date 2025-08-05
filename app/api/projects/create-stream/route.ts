@@ -8,89 +8,113 @@ import { getUserById } from "../../auth/store";
 interface ProgressStep {
   id: string;
   message: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'error';
+  status: "pending" | "in_progress" | "completed" | "error";
 }
 
-function createProgressMessage(type: 'progress' | 'success' | 'error', data: any): string {
+function createProgressMessage(
+  type: "progress" | "success" | "error",
+  data: any
+): string {
   return `data: ${JSON.stringify({ type, ...data })}\n\n`;
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const name = searchParams.get('name');
+  const name = searchParams.get("name");
 
   if (!name || typeof name !== "string") {
-    return new Response(createProgressMessage('error', { message: 'Name is required' }), {
-      status: 400,
-      headers: {
-        'Content-Type': 'text/plain',
+    return new Response(
+      createProgressMessage("error", { message: "Name is required" }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "text/plain",
+        },
       }
-    });
+    );
   }
 
   // Set up SSE headers
   const headers = new Headers({
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Cache-Control',
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Cache-Control",
   });
 
   const encoder = new TextEncoder();
-  
+
   const stream = new ReadableStream({
     async start(controller) {
+      let currentStepId: string | undefined;
+
       const sendProgress = (step: ProgressStep) => {
-        controller.enqueue(encoder.encode(createProgressMessage('progress', { step })));
+        currentStepId = step.status === "in_progress" ? step.id : currentStepId;
+        controller.enqueue(
+          encoder.encode(createProgressMessage("progress", { step }))
+        );
       };
 
       const sendSuccess = (projectId: string) => {
-        controller.enqueue(encoder.encode(createProgressMessage('success', { projectId })));
+        controller.enqueue(
+          encoder.encode(createProgressMessage("success", { projectId }))
+        );
         controller.close();
       };
 
-      const sendError = (message: string) => {
-        controller.enqueue(encoder.encode(createProgressMessage('error', { message })));
+      const sendError = (message: string, stepId?: string) => {
+        const errorStepId = stepId || currentStepId;
+        // If we have a current step that was in progress, mark it as failed
+        if (errorStepId) {
+          sendProgress({
+            id: errorStepId,
+            message: `Failed: ${message}`,
+            status: "error",
+          });
+        }
+        controller.enqueue(
+          encoder.encode(createProgressMessage("error", { message }))
+        );
         controller.close();
       };
 
       try {
         // Step 1: Authentication
         sendProgress({
-          id: 'auth',
-          message: 'Authenticating user...',
-          status: 'in_progress'
+          id: "auth",
+          message: "Authenticating user...",
+          status: "in_progress",
         });
 
         const authUser = await getAuthenticatedUser(request);
         if (!authUser) {
-          sendError('Authentication required');
+          sendError("Authentication required", "auth");
           return;
         }
 
         const user = getUserById(authUser.id);
         if (!user || !user.githubToken) {
-          sendError('GitHub token not found for user');
+          sendError("GitHub token not found for user", "auth");
           return;
         }
 
         if (!process.env.CSB_API_KEY) {
-          sendError('CodeSandbox API key is required');
+          sendError("CodeSandbox API key is required", "auth");
           return;
         }
 
         sendProgress({
-          id: 'auth',
-          message: 'User authenticated successfully',
-          status: 'completed'
+          id: "auth",
+          message: "User authenticated successfully",
+          status: "completed",
         });
 
         // Step 2: Create GitHub repository
         sendProgress({
-          id: 'github-repo',
-          message: 'Creating GitHub repository...',
-          status: 'in_progress'
+          id: "github-repo",
+          message: "Creating GitHub repository...",
+          status: "in_progress",
         });
 
         const octokit = new Octokit({
@@ -105,16 +129,16 @@ export async function GET(request: NextRequest) {
         });
 
         sendProgress({
-          id: 'github-repo',
+          id: "github-repo",
           message: `GitHub repository created: ${repo.data.html_url}`,
-          status: 'completed'
+          status: "completed",
         });
 
         // Step 3: Create CodeSandbox sandbox
         sendProgress({
-          id: 'sandbox-create',
-          message: 'Creating CodeSandbox sandbox...',
-          status: 'in_progress'
+          id: "sandbox-create",
+          message: "Creating CodeSandbox sandbox...",
+          status: "in_progress",
         });
 
         const sdk = new CodeSandbox(process.env.CSB_API_KEY);
@@ -123,16 +147,16 @@ export async function GET(request: NextRequest) {
         });
 
         sendProgress({
-          id: 'sandbox-create',
+          id: "sandbox-create",
           message: `Sandbox created: ${sandbox.id}`,
-          status: 'completed'
+          status: "completed",
         });
 
         // Step 4: Connect to sandbox
         sendProgress({
-          id: 'sandbox-connect',
-          message: 'Connecting to sandbox...',
-          status: 'in_progress'
+          id: "sandbox-connect",
+          message: "Connecting to sandbox...",
+          status: "in_progress",
         });
 
         const client = await sandbox.connect({
@@ -146,54 +170,64 @@ export async function GET(request: NextRequest) {
         });
 
         sendProgress({
-          id: 'sandbox-connect',
-          message: 'Connected to sandbox successfully',
-          status: 'completed'
+          id: "sandbox-connect",
+          message: "Connected to sandbox successfully",
+          status: "completed",
         });
 
         // Step 5: Setting up Git repository
         sendProgress({
-          id: 'git-setup',
-          message: 'Initializing Git repository...',
-          status: 'in_progress'
+          id: "git-setup",
+          message: "Initializing Git repository...",
+          status: "in_progress",
         });
 
-        await client.commands.run([
-          "cd app && git init",
-          `cd app && git remote add origin https://github.com/${user.username}/${name}.git`,
-        ]);
+        await client.commands.run(
+          [
+            "git init",
+            `git remote add origin https://github.com/${user.username}/${name}.git`,
+          ],
+          {
+            cwd: "/project/workspace/app",
+          }
+        );
 
         sendProgress({
-          id: 'git-setup',
-          message: 'Git repository initialized',
-          status: 'completed'
+          id: "git-setup",
+          message: "Git repository initialized",
+          status: "completed",
         });
 
         // Step 6: Committing and pushing code
         sendProgress({
-          id: 'git-push',
-          message: 'Committing and pushing initial code...',
-          status: 'in_progress'
+          id: "git-push",
+          message: "Committing and pushing initial code...",
+          status: "in_progress",
         });
 
-        await client.commands.run([
-          "cd app && git add .",
-          `cd app && git commit -m "Initial commit"`,
-          "cd app && git branch -M main",
-          "cd app && git push -u origin main",
-        ]);
+        await client.commands.run(
+          [
+            "git add .",
+            `git commit -m "Initial commit"`,
+            "git branch -M main",
+            "git push -u origin main",
+          ],
+          {
+            cwd: "/project/workspace/app",
+          }
+        );
 
         sendProgress({
-          id: 'git-push',
-          message: 'Code pushed to GitHub successfully',
-          status: 'completed'
+          id: "git-push",
+          message: "Code pushed to GitHub successfully",
+          status: "completed",
         });
 
         // Step 7: Generate host token
         sendProgress({
-          id: 'host-token',
-          message: 'Generating host token...',
-          status: 'in_progress'
+          id: "host-token",
+          message: "Generating host token...",
+          status: "in_progress",
         });
 
         const hostToken = await sdk.hosts.createToken(sandbox.id, {
@@ -201,40 +235,44 @@ export async function GET(request: NextRequest) {
         });
 
         sendProgress({
-          id: 'host-token',
-          message: 'Host token generated',
-          status: 'completed'
+          id: "host-token",
+          message: "Host token generated",
+          status: "completed",
         });
 
         // Step 8: Save project
         sendProgress({
-          id: 'save-project',
-          message: 'Saving project...',
-          status: 'in_progress'
+          id: "save-project",
+          message: "Saving project...",
+          status: "in_progress",
         });
 
-        const project = await addProject(name, sandbox.id, hostToken, repo.data.html_url);
+        const project = await addProject(
+          name,
+          sandbox.id,
+          hostToken,
+          repo.data.html_url
+        );
 
         sendProgress({
-          id: 'save-project',
-          message: 'Project saved successfully',
-          status: 'completed'
+          id: "save-project",
+          message: "Project saved successfully",
+          status: "completed",
         });
 
         // Success!
         sendSuccess(project.id);
-
       } catch (error) {
         console.error("Project creation failed:", error);
         let errorMessage = "Failed to create project";
-        
+
         if (error instanceof Error) {
           errorMessage = error.message;
         }
-        
+
         sendError(errorMessage);
       }
-    }
+    },
   });
 
   return new Response(stream, { headers });
