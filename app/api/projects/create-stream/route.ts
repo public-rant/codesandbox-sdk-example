@@ -187,10 +187,8 @@ export async function GET(request: NextRequest) {
         });
 
         await client.commands.run(
-          [
-            "git init",
-            `git remote add origin https://github.com/${user.username}/${name}.git`,
-          ],
+          "git init",
+          `git remote add origin https://github.com/${user.username}/${repo.data.name}.git`,
           {
             cwd: "/project/workspace/app",
           }
