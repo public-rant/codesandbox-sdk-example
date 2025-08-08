@@ -85,6 +85,21 @@ export default function CreateProjectModal({ isOpen, onClose, onProjectCreated }
               />
             </div>
             
+            <div style={{
+              backgroundColor: '#f0f9ff',
+              color: '#075985',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              marginBottom: '16px',
+              border: '1px solid #bae6fd',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <span style={{ marginRight: '6px', fontSize: '16px' }}>ℹ️</span>
+              This will create a public repository on your GitHub account.
+            </div>
+            
             {error && (
               <div style={{
                 backgroundColor: '#fef2f2',

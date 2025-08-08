@@ -20,12 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!user.githubToken) {
-      return NextResponse.json(
-        { error: 'GitHub token not configured. Please set GITHUB_TOKEN environment variable.' },
-        { status: 500 }
-      );
-    }
+    // GitHub token is optional for basic functionality
 
     const session = createSession(user.id);
 

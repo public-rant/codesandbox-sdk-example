@@ -1,6 +1,7 @@
 {
-  "name": "app",
+  "name": "codesandbox-clone",
   "version": "0.1.0",
+  "description": "A full-featured CodeSandbox clone built with Next.js and the CodeSandbox SDK",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

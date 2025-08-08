@@ -1,6 +1,6 @@
-# CodeSandbox SDK Integration Example
+# CodeSandbox Clone
 
-A comprehensive example application demonstrating the [@codesandbox/sdk](https://codesandbox.io/docs/sdk) integration with React hooks architecture. This project showcases automated project creation, sandbox management, and real-time development environments.
+A full-featured CodeSandbox clone built with Next.js and the [@codesandbox/sdk](https://codesandbox.io/docs/sdk). This application provides a complete online code editing experience with automated project creation, sandbox management, and real-time development environments.
 
 ## 🖥️ User-Facing Features
 

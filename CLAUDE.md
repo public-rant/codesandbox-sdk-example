@@ -22,6 +22,14 @@ To enable sandbox creation, you need to set up your CodeSandbox API key:
 2. Generate an API key at https://codesandbox.io/t/api
 3. Set the environment variable: `CSB_API_KEY=your_api_key_here`
 
+### GitHub Token Requirements
+
+If using GitHub integration features, you'll need a GitHub token with the following permissions:
+- Repository creation access
+- Push access to repositories
+
+Set the environment variable: `GITHUB_TOKEN=your_github_token_here`
+
 ## Template Configuration
 
 The system uses `sandbox-template@latest` as the default template for creating new sandboxes. This template is defined in the `sandbox-template/` directory and contains a basic Vite + React setup.

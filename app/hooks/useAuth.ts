@@ -31,11 +31,41 @@ export function useAuth(): UseAuthReturn {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData.user);
+      } else if (response.status === 401) {
+        // Expected: no session exists, trigger auto-login
+        await autoLogin();
+      } else {
+        console.error('Unexpected auth check error:', response.status);
+        await autoLogin();
       }
     } catch (err) {
       console.error('Auth check failed:', err);
+      // Attempt auto-login on network errors too
+      await autoLogin();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const autoLogin = async () => {
+    try {
+      const response = await fetch('/api/auth/auto-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        console.error('Auto-login failed with status:', response.status);
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
+      }
+    } catch (err) {
+      console.error('Auto-login failed:', err);
     }
   };
 

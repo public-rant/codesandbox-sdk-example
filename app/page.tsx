@@ -1,21 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import LoginForm from './components/LoginForm';
 import CreateProjectModal from './components/CreateProjectModal';
+import GitHubTokenError from './components/GitHubTokenError';
 import { useAuth } from './hooks/useAuth';
 import { useProjects } from './hooks/useProjects';
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hasGitHubToken, setHasGitHubToken] = useState<boolean | null>(null);
   const router = useRouter();
   
   const { user, loading: authLoading, logout } = useAuth();
   const { projects, loading: projectsLoading, fetchProjects } = useProjects();
 
   const loading = authLoading || (user && projectsLoading);
+
+  useEffect(() => {
+    const checkGitHubToken = async () => {
+      try {
+        const response = await fetch('/api/auth/github-status');
+        if (response.ok) {
+          const data = await response.json();
+          setHasGitHubToken(data.hasGitHubToken);
+        }
+      } catch (err) {
+        console.error('Failed to check GitHub token status:', err);
+        setHasGitHubToken(false);
+      }
+    };
+
+    if (user) {
+      checkGitHubToken();
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -31,7 +51,21 @@ export default function Home() {
     router.push(`/projects/${projectId}`);
   };
 
-  if (loading) {
+  const handleRetryGitHubCheck = async () => {
+    setHasGitHubToken(null);
+    try {
+      const response = await fetch('/api/auth/github-status');
+      if (response.ok) {
+        const data = await response.json();
+        setHasGitHubToken(data.hasGitHubToken);
+      }
+    } catch (err) {
+      console.error('Failed to check GitHub token status:', err);
+      setHasGitHubToken(false);
+    }
+  };
+
+  if (loading || !user || hasGitHubToken === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -42,8 +76,8 @@ export default function Home() {
     );
   }
 
-  if (!user) {
-    return <LoginForm />;
+  if (hasGitHubToken === false) {
+    return <GitHubTokenError onRetry={handleRetryGitHubCheck} />;
   }
 
   return (
@@ -53,8 +87,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Project Dashboard</h1>
-              <p className="text-gray-600 mt-1">Manage and monitor your projects</p>
+              <h1 className="text-3xl font-bold text-gray-900">CodeSandbox Clone</h1>
+              <p className="text-gray-600 mt-1">Create and manage your coding projects</p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
