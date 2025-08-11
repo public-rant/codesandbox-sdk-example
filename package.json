@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "template": "csb build ./sandbox-template --vm-tier Nano --vm-build-tier Micro --ports 5173 --alias sdk-example@latest",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 78679 --no-open",
+    "test": "npx playwright test --ui-port 75299 ",
     "build-storybook": "storybook build"
   },
   "dependencies": {
