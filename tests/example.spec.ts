@@ -49,6 +49,33 @@ test.describe("Application Baseline Tests", () => {
     await expect(page).toHaveTitle("CodeSandbox Clone");
   });
 
+  test("shows loading spinner during initial load", async ({ page }) => {
+    // Intercept the GitHub status check to delay it
+    await page.route("/api/auth/github-status", async (route) => {
+      // Delay the response to see the loading state
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ hasGitHubToken: false }),
+      });
+    });
+
+    await page.goto("/");
+
+    // The loading spinner should be visible initially
+    const spinner = page.locator(".animate-spin");
+    await expect(spinner).toBeVisible();
+
+    // Check for loading text
+    await expect(page.getByText("Loading...")).toBeVisible();
+
+    // Wait for the loading to complete and error page to show
+    await expect(
+      page.getByRole("heading", { name: "Missing GitHub Token" }),
+    ).toBeVisible({ timeout: 10000 });
+  });
+
   test.describe("When GitHub token is configured", () => {
     test.skip("should show login form", async ({ page }) => {
       // This test is skipped by default since it requires GITHUB_TOKEN env var
