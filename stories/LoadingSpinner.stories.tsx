@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { within } from "@storybook/testing-library";
-import { expect } from "@storybook/jest";
+import { expect, userEvent, within } from "storybook/test";
 import LoadingSpinner from "../app/components/LoadingSpinner";
 
 const meta = {
@@ -114,7 +113,11 @@ export const SizeComparison: Story = {
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">Medium</h3>
-            <LoadingSpinner size="md" fullScreen={false} text="Medium spinner" />
+            <LoadingSpinner
+              size="md"
+              fullScreen={false}
+              text="Medium spinner"
+            />
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">Large</h3>
@@ -147,7 +150,9 @@ export const AccessibilityTest: Story = {
     await expect(spinner).toHaveClass("animate-spin");
 
     // Check for the loading text
-    await expect(canvas.getByText("Loading your projects...")).toBeInTheDocument();
+    await expect(
+      canvas.getByText("Loading your projects..."),
+    ).toBeInTheDocument();
   },
 };
 
@@ -171,11 +176,7 @@ export const TextVariations: Story = {
           />
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
-          <LoadingSpinner
-            size="md"
-            fullScreen={false}
-            text="Almost there..."
-          />
+          <LoadingSpinner size="md" fullScreen={false} text="Almost there..." />
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <LoadingSpinner

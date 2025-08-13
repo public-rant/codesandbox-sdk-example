@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { within, userEvent } from "@storybook/testing-library";
-import { expect } from "@storybook/jest";
+import { expect, userEvent, within } from "storybook/test";
+
 import GitHubTokenError from "../app/components/GitHubTokenError";
 
+// CSE-2 FIXME
 const meta = {
   title: "Components/GitHubTokenError",
   component: GitHubTokenError,
@@ -19,7 +20,8 @@ const meta = {
   argTypes: {
     onRetry: {
       action: "retry clicked",
-      description: "Callback function triggered when the retry button is clicked",
+      description:
+        "Callback function triggered when the retry button is clicked",
     },
   },
 } satisfies Meta<typeof GitHubTokenError>;
@@ -44,12 +46,12 @@ export const RetryInteraction: Story = {
   args: {
     onRetry: () => console.log("Retry clicked"),
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     // Verify the main error message is displayed
     await expect(
-      canvas.getByRole("heading", { name: "Missing GitHub Token" })
+      canvas.getByRole("heading", { name: "Missing GitHub Token" }),
     ).toBeInTheDocument();
 
     // Verify setup instructions are shown
@@ -77,7 +79,7 @@ export const NoRetryOption: Story = {
 
     // Verify the main error message is displayed
     await expect(
-      canvas.getByRole("heading", { name: "Missing GitHub Token" })
+      canvas.getByRole("heading", { name: "Missing GitHub Token" }),
     ).toBeInTheDocument();
 
     // Verify that no retry button is present
@@ -96,29 +98,35 @@ export const VerifyInstructions: Story = {
 
     // Verify all instruction steps are present
     await expect(
-      canvas.getByText(/GitHub Settings → Developer settings → Personal access tokens/)
+      canvas.getByText(
+        /GitHub Settings → Developer settings → Personal access tokens/,
+      ),
     ).toBeInTheDocument();
 
     await expect(
-      canvas.getByText("Create a new token with repo permissions")
+      canvas.getByText("Create a new token with repo permissions"),
     ).toBeInTheDocument();
 
     await expect(
-      canvas.getByText("Set the environment variable:")
+      canvas.getByText("Set the environment variable:"),
     ).toBeInTheDocument();
 
     // Verify the code snippet is shown
     await expect(
-      canvas.getByText("GITHUB_TOKEN=your_token_here")
+      canvas.getByText("GITHUB_TOKEN=your_token_here"),
     ).toBeInTheDocument();
 
     // Verify helper text
     await expect(
-      canvas.getByText("Add this to your .env.local file or environment variables")
+      canvas.getByText(
+        "Add this to your .env.local file or environment variables",
+      ),
     ).toBeInTheDocument();
 
     await expect(
-      canvas.getByText("Restart your development server after setting the token")
+      canvas.getByText(
+        "Restart your development server after setting the token",
+      ),
     ).toBeInTheDocument();
   },
 };
