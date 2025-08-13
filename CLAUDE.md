@@ -62,8 +62,8 @@ The integration is designed to be non-blocking - if CodeSandbox is unavailable, 
 ## Tasks
 
 **Before you generate code or modify files, run the jira tools to track the changes.**
-
 If you generate code or modify files, run the gitbutler update branches MCP tool.
+Add a reference to the jira issue in branches/commits etc. according to the convention KEY-123 where KEY is the project key and 123 is the issue number.
 
 1. **Development Testing:**
    - Test the development app using Playwright. This ensures that any changes made immediately provide immediate feedback from an end-to-end perspective.
