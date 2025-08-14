@@ -10,6 +10,7 @@ export interface User {
   githubToken?: string;
   // CSE-2: Add user authentication with token validation
   // TODO: Add accessToken and refreshToken fields for Bearer token authentication
+  // CSE-8 Add GitHub OAuth profile data
 }
 
 export interface Session {
@@ -62,6 +63,7 @@ function saveSessions(sessions: Session[]): void {
 export function findUser(username: string, password: string): User | undefined {
   // CSE-2: Add user authentication with token validation
   // TODO: Enhance to support token-based authentication in addition to username/password
+  // CSE-8 Support finding user by GitHub ID
   return users.find((u) => u.username === username && u.password === password);
 }
 
@@ -113,5 +115,6 @@ export function removeSession(sessionId: string): void {
 export function getUserById(userId: string): User | undefined {
   // CSE-2: Add user authentication with token validation
   // TODO: Enhance to include token validation when retrieving user
+  // CSE-8 Create or update user from GitHub OAuth
   return users.find((u) => u.id === userId);
 }

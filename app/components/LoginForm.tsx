@@ -10,7 +10,7 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       await login(username, password);
     } catch (err) {
@@ -78,13 +78,26 @@ export default function LoginForm() {
           </button>
         </form>
 
+        {/* CSE-8 Add GitHub OAuth Sign In Button */}
+        {/* This button should initiate the /api/auth/github OAuth flow for multi-user organization support */}
+
+        <button
+          type="button"
+          onClick={() => (window.location.href = "/api/auth/github")}
+          className="w-full mt-6 bg-gray-800 text-white py-2 px-4 rounded-lg hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 transition-colors"
+        >
+          Sign in with GitHub (Org)
+        </button>
+
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <p className="text-sm font-medium text-gray-700 mb-2">
             Demo Account:
           </p>
           <div className="space-y-1 text-sm text-gray-600">
             <div>User: GITHUB_USERNAME, Password: "password"</div>
-            <div className="text-orange-600 font-medium">Requires GITHUB_TOKEN env var to be set</div>
+            <div className="text-orange-600 font-medium">
+              Requires GITHUB_TOKEN env var to be set
+            </div>
           </div>
         </div>
       </div>

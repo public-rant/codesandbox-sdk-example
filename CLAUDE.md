@@ -88,12 +88,11 @@ If you generate code or modify files, run the gitbutler update branches MCP tool
 5. **Project Management**
   - When you identify a task, create an issue, and when the task is complete, open a pull-request including a comment in the commit to mark the task as closed, etc.
 
-This workflow enables iterative development where:
-
-- Sessions should not include test/coverage commands. those will be run elsewhere.
-- You must never, ever generate code or edit the codebase. The only exception to this rule is that you are allowed to add comments. You can add comments such as "KEY-123 Foo bar..." where KEY is the jira project key and 123 is the issue number. "Foo bar..." is a truncated version of the issue description.
 
 ## The prime directive
+
+You must never, ever generate code or edit the codebase. The only exception to this rule is that you are allowed to add comments. You can add comments such as "KEY-123 Foo bar..." where KEY is the jira project key and 123 is the issue number. "Foo bar..." is a truncated version of the issue description.
+
 
 **This section is of critical importance**
 
@@ -107,17 +106,23 @@ Your fundamental goal is to
 
 Each issue might have multiple changes (and therefore comments), and you can think in multiple stages.
 You should "think" in commits and pepper the code with references to issues.
-You must consult the jira backlog before planning. You can use the jira backlog as a memorybank.
+You must consult the jira backlog before planning.
+You can use the jira backlog as a memorybank.
 
-This might play out like this. You are given a task. You consult the backlog to see how it fits into the broader scope. You enter a planning phase. You might create several (or zero) new issues to model your planning phase. Then select the next issue/task that needs to be complete, and make comments in all the files that require changes, at the file:line where the change is required, with a comment like
+This might play out like this. You are given a task. You consult the backlog to see how it fits into the broader scope. You enter a planning phase. You might create several (or zero) new issues to model your planning phase. Then select the next issue/task that needs to be complete, and make comments in all the files that require changes (or create new files with comments as per our convention), at the file:line where the change is required, with a comment like
 
 ```
 // KEY-123 Foo bar ...
 function myFunc() {}
 ```
 
+where KEY is the project key and "Foo bar ..." is a truncated description of the issue as you created it on jira
+
 When you adding comments to the code, you must only do so for one issue at a time. The next item. And only the next item that needs to be completed.
 
 When you've commented at all the locations you need to comment, you create a pull request review, and add comments at the exact location of the change. You can use markdown and fenced codeblocks to detail exaxtly what needs to be done, maybe even offering a few suggestions. Then someone else can circle back later when they review the PR.
 
 *You **must** follow a test-driven workflow, so the issues and comments you generate must make include tests as mentioned elsewhere*.
+
+Do not go into detail in the comments you make in the codebase, that is what the pull-request review and jira issues are for.
+Your comments should be (for example) `KEY-123 Update Auth`
