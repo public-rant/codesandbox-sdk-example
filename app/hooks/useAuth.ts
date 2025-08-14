@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface User {
   id: string;
@@ -16,6 +16,9 @@ interface UseAuthReturn {
   error: string | null;
 }
 
+// CSE-6: Add user context provider
+// TODO: This hook should be wrapped in a React context provider for global state management
+// to enable authentication status and user profile data caching across all components
 export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +30,7 @@ export function useAuth(): UseAuthReturn {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await fetch("/api/auth/me");
       if (response.ok) {
         const userData = await response.json();
         setUser(userData.user);
@@ -35,11 +38,11 @@ export function useAuth(): UseAuthReturn {
         // Expected: no session exists, trigger auto-login
         await autoLogin();
       } else {
-        console.error('Unexpected auth check error:', response.status);
+        console.error("Unexpected auth check error:", response.status);
         await autoLogin();
       }
     } catch (err) {
-      console.error('Auth check failed:', err);
+      console.error("Auth check failed:", err);
       // Attempt auto-login on network errors too
       await autoLogin();
     } finally {
@@ -49,10 +52,10 @@ export function useAuth(): UseAuthReturn {
 
   const autoLogin = async () => {
     try {
-      const response = await fetch('/api/auth/auto-login', {
-        method: 'POST',
+      const response = await fetch("/api/auth/auto-login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -60,12 +63,12 @@ export function useAuth(): UseAuthReturn {
         const data = await response.json();
         setUser(data.user);
       } else {
-        console.error('Auto-login failed with status:', response.status);
+        console.error("Auto-login failed with status:", response.status);
         const errorData = await response.json();
-        console.error('Error details:', errorData);
+        console.error("Error details:", errorData);
       }
     } catch (err) {
-      console.error('Auto-login failed:', err);
+      console.error("Auto-login failed:", err);
     }
   };
 
@@ -74,10 +77,10 @@ export function useAuth(): UseAuthReturn {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
@@ -87,12 +90,12 @@ export function useAuth(): UseAuthReturn {
       if (response.ok) {
         setUser(data.user);
       } else {
-        setError(data.error || 'Login failed');
-        throw new Error(data.error || 'Login failed');
+        setError(data.error || "Login failed");
+        throw new Error(data.error || "Login failed");
       }
     } catch (err) {
-      if (err instanceof Error && err.message !== 'Login failed') {
-        setError('Network error occurred');
+      if (err instanceof Error && err.message !== "Login failed") {
+        setError("Network error occurred");
       }
       throw err;
     } finally {
@@ -102,10 +105,10 @@ export function useAuth(): UseAuthReturn {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
     } catch (err) {
-      console.error('Logout failed:', err);
+      console.error("Logout failed:", err);
       throw err;
     }
   };
