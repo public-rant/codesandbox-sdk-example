@@ -62,8 +62,9 @@ The integration is designed to be non-blocking - if CodeSandbox is unavailable, 
 ## Tasks
 
 **Before you generate code or modify files, run the jira tools to track the changes.**
+
 If you generate code or modify files, run the gitbutler update branches MCP tool.
-Add a reference to the jira issue in branches/commits etc. according to the convention KEY-123 where KEY is the project key and 123 is the issue number.
+
 
 1. **Development Testing:**
    - Test the development app using Playwright. This ensures that any changes made immediately provide immediate feedback from an end-to-end perspective.
@@ -85,14 +86,38 @@ Add a reference to the jira issue in branches/commits etc. according to the conv
    - Command: `npm run test-storybook:coverage`
 
 5. **Project Management**
-  - You must interface with a project management tool like github issues to track your work.
   - When you identify a task, create an issue, and when the task is complete, open a pull-request including a comment in the commit to mark the task as closed, etc.
 
 This workflow enables iterative development where:
 
-- You define "sessions" which you start with `tmux new -s "Task Description" zed -n --wait *files`
-- The zed cli allows setting `file:line:column`
-- You create zed sessions, enclosed in named tmux sessions. The name of the session should be sufficient to prompt an agent to continue work, perhaps by reference to a github issue, etc.
-- Each session should be a unit of work, and include tests.
-- You can create as many sessions as you like and assume that they will be completed in order. Don't be afraid to break things down into minute changes. Each session could be like it's own "commit", or like a tmux session with files open at the locations that changes are required for a commit. Then another agent executes the task, derived from the session name.
 - Sessions should not include test/coverage commands. those will be run elsewhere.
+- You must never, ever generate code or edit the codebase. The only exception to this rule is that you are allowed to add comments. You can add comments such as "KEY-123 Foo bar..." where KEY is the jira project key and 123 is the issue number. "Foo bar..." is a truncated version of the issue description.
+
+## The prime directive
+
+**This section is of critical importance**
+
+Your fundamental goal is to
+
+0. Consult the backlog and make plans based on the current scope but also consider the backlog, tracking your planning in Jira
+1. Add comments to the codebase describing the changes that need to be made for the current prompt only
+2. Create a draft pull request with *only* those comments
+3. Create a pull request review commenting at the exact location of each change, and go into detail about exactly what you were planning
+4. Create a jira issue modelling each comment you made in the PR review
+
+Each issue might have multiple changes (and therefore comments), and you can think in multiple stages.
+You should "think" in commits and pepper the code with references to issues.
+You must consult the jira backlog before planning. You can use the jira backlog as a memorybank.
+
+This might play out like this. You are given a task. You consult the backlog to see how it fits into the broader scope. You enter a planning phase. You might create several (or zero) new issues to model your planning phase. Then select the next issue/task that needs to be complete, and make comments in all the files that require changes, at the file:line where the change is required, with a comment like
+
+```
+// KEY-123 Foo bar ...
+function myFunc() {}
+```
+
+When you adding comments to the code, you must only do so for one issue at a time. The next item. And only the next item that needs to be completed.
+
+When you've commented at all the locations you need to comment, you create a pull request review, and add comments at the exact location of the change. You can use markdown and fenced codeblocks to detail exaxtly what needs to be done, maybe even offering a few suggestions. Then someone else can circle back later when they review the PR.
+
+*You **must** follow a test-driven workflow, so the issues and comments you generate must make include tests as mentioned elsewhere*.
