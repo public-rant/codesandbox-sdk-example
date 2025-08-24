@@ -99,6 +99,9 @@ export default function Home() {
                 Create Project
               </button>
               <div className="flex items-center space-x-3">
+                {/* CSE-4: Add user profile information display
+                    TODO: Enhance this section to show more user details like avatar, email,
+                    account creation date, and GitHub connection status */}
                 <div className="text-sm">
                   <span className="text-gray-600">Welcome, </span>
                   <span className="font-medium text-gray-900">

@@ -3,6 +3,7 @@ import { expect, userEvent, within } from "storybook/test";
 
 import GitHubTokenError from "../app/components/GitHubTokenError";
 
+// CSE-2 FIXME
 const meta = {
   title: "Components/GitHubTokenError",
   component: GitHubTokenError,
