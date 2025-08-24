@@ -1,18 +1,114 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test.describe("Application Baseline Tests", () => {
+  test("has correct page title", async ({ page }) => {
+    await page.goto("/");
+    await expect(page).toHaveTitle(/CodeSandbox Clone/);
+  });
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
+  test("shows GitHub token error when token is missing", async ({ page }) => {
+    await page.goto("/");
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+    // Check for the error heading
+    await expect(
+      page.getByRole("heading", { name: "Missing GitHub Token" }),
+    ).toBeVisible();
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+    // Verify setup instructions are shown
+    await expect(page.getByText("Setup Instructions:")).toBeVisible();
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+    // Check for the retry button
+    await expect(
+      page.getByRole("button", { name: "Check Again" }),
+    ).toBeVisible();
+
+    // Verify the page contains instructions about GitHub token
+    await expect(page.getByText(/Personal access tokens/)).toBeVisible();
+  });
+
+  test("GitHub token error page has retry functionality", async ({ page }) => {
+    await page.goto("/");
+
+    // Click the Check Again button
+    const retryButton = page.getByRole("button", { name: "Check Again" });
+    await expect(retryButton).toBeVisible();
+
+    // Click and verify it attempts to check again (button should still be visible since no token)
+    await retryButton.click();
+
+    // After clicking, the error should still be present (since we don't have a token)
+    await expect(
+      page.getByRole("heading", { name: "Missing GitHub Token" }),
+    ).toBeVisible();
+  });
+
+  test("maintains correct title in error state", async ({ page }) => {
+    await page.goto("/");
+
+    // Even in error state, the page title should be correct
+    await expect(page).toHaveTitle("CodeSandbox Clone");
+  });
+
+  test("shows loading spinner during initial load", async ({ page }) => {
+    // Intercept the GitHub status check to delay it
+    await page.route("/api/auth/github-status", async (route) => {
+      // Delay the response to see the loading state
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ hasGitHubToken: false }),
+      });
+    });
+
+    await page.goto("/");
+
+    // The loading spinner should be visible initially
+    const spinner = page.locator(".animate-spin");
+    await expect(spinner).toBeVisible();
+
+    // Check for loading text
+    await expect(page.getByText("Loading...")).toBeVisible();
+
+    // Wait for the loading to complete and error page to show
+    await expect(
+      page.getByRole("heading", { name: "Missing GitHub Token" }),
+    ).toBeVisible({ timeout: 10000 });
+  });
+
+  test.describe("When GitHub token is configured", () => {
+    test.skip("should show login form", async ({ page }) => {
+      // This test is skipped by default since it requires GITHUB_TOKEN env var
+      // To run: set GITHUB_TOKEN and remove .skip
+      await page.goto("/");
+
+      // Wait for any redirects or loading
+      await page.waitForLoadState("networkidle");
+
+      // Should show login form elements
+      await expect(page.locator('input[type="text"]')).toBeVisible();
+      await expect(page.locator('input[type="password"]')).toBeVisible();
+      await expect(page.getByRole("button", { name: /login/i })).toBeVisible();
+    });
+
+    test.skip("should show app header after login", async ({ page }) => {
+      // This test requires both GITHUB_TOKEN and valid credentials
+      await page.goto("/");
+
+      // Perform login
+      await page.fill('input[type="text"]', "testuser");
+      await page.fill('input[type="password"]', "Test123!@#");
+      await page.getByRole("button", { name: /login/i }).click();
+
+      // After successful login, should see the main app header
+      await expect(
+        page.getByRole("heading", { name: "CodeSandbox Clone" }),
+      ).toBeVisible();
+
+      // Should see the Create Project button
+      await expect(
+        page.getByRole("button", { name: "Create Project" }),
+      ).toBeVisible();
+    });
+  });
 });

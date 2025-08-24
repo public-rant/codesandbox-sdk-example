@@ -58,3 +58,41 @@ interface Project {
 - **File**: `app/api/projects/store.ts:11` - Updated addProject function
 
 The integration is designed to be non-blocking - if CodeSandbox is unavailable, project creation will still succeed.
+
+## Tasks
+
+**Before you generate code or modify files, run the jira tools to track the changes.**
+If you generate code or modify files, run the gitbutler update branches MCP tool.
+Add a reference to the jira issue in branches/commits etc. according to the convention KEY-123 where KEY is the project key and 123 is the issue number.
+
+1. **Development Testing:**
+   - Test the development app using Playwright. This ensures that any changes made immediately provide immediate feedback from an end-to-end perspective.
+   - Command: `npm run test -- --project chromium`
+
+2. **Component Extraction & Isolation:**
+   - Identify and extract reusable UI components from the application.
+   - Refactor these components to decouple from business logic and make them testable in isolation.
+   - Create and update Storybook stories for each component, including interaction tests to simulate user behaviors.
+   - Command for Storybook Testing: `npm run test-storybook`
+   - Never start the storybook server or dev server. Assume they have been started, or inform the user if they are not running
+
+3. **Outside-In Testing:**
+   - After refactoring and establishing isolated component tests, verify overall system behavior with comprehensive outside-in tests using Playwright as described in subsection 1.
+   - This step ensures that the integration of isolated UI components into the larger system didn't introduce regressions.
+
+4. **Test Coverage:**
+   - Ensure that the automated test suite maintains (or improves) the overall code coverage.
+   - Command: `npm run test-storybook:coverage`
+
+5. **Project Management**
+  - You must interface with a project management tool like github issues to track your work.
+  - When you identify a task, create an issue, and when the task is complete, open a pull-request including a comment in the commit to mark the task as closed, etc.
+
+This workflow enables iterative development where:
+
+- You define "sessions" which you start with `tmux new -s "Task Description" zed -n --wait *files`
+- The zed cli allows setting `file:line:column`
+- You create zed sessions, enclosed in named tmux sessions. The name of the session should be sufficient to prompt an agent to continue work, perhaps by reference to a github issue, etc.
+- Each session should be a unit of work, and include tests.
+- You can create as many sessions as you like and assume that they will be completed in order. Don't be afraid to break things down into minute changes. Each session could be like it's own "commit", or like a tmux session with files open at the locations that changes are required for a commit. Then another agent executes the task, derived from the session name.
+- Sessions should not include test/coverage commands. those will be run elsewhere.
