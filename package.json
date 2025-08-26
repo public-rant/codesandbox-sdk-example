@@ -10,7 +10,8 @@
     "lint": "next lint",
     "template": "csb build ./sandbox-template --vm-tier Nano --vm-build-tier Micro --ports 5173 --alias sdk-example@latest",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "npx playwright test --ui-port 7529"
   },
   "dependencies": {
     "@codesandbox/sdk": "^2.0.6-rc.1",
