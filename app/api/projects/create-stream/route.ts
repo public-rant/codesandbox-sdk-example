@@ -4,7 +4,10 @@ import { NextRequest } from "next/server";
 import { getAuthenticatedUser } from "../../auth/middleware";
 import { getUserById } from "../../auth/store";
 import { getCodeSandboxService } from "../../services/codesandbox";
-import { validateEnvironment, validateRequiredParams } from "../../utils/responses";
+import {
+  validateEnvironment,
+  validateRequiredParams,
+} from "../../utils/responses";
 
 interface ProgressStep {
   id: string;
@@ -14,7 +17,7 @@ interface ProgressStep {
 
 function createProgressMessage(
   type: "progress" | "success" | "error",
-  data: any
+  data: any,
 ): string {
   return `data: ${JSON.stringify({ type, ...data })}\n\n`;
 }
@@ -27,16 +30,19 @@ function createProgressMessage(
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const name = searchParams.get("name");
+  const version = searchParams.get("version") || "latest"; // Default to latest if not specified
 
   if (!name || typeof name !== "string") {
     return new Response(
-      createProgressMessage("error", { message: "Project name is required and must be a non-empty string" }),
+      createProgressMessage("error", {
+        message: "Project name is required and must be a non-empty string",
+      }),
       {
         status: 400,
         headers: {
           "Content-Type": "text/plain",
         },
-      }
+      },
     );
   }
 
@@ -58,13 +64,13 @@ export async function GET(request: NextRequest) {
       const sendProgress = (step: ProgressStep) => {
         currentStepId = step.status === "in_progress" ? step.id : currentStepId;
         controller.enqueue(
-          encoder.encode(createProgressMessage("progress", { step }))
+          encoder.encode(createProgressMessage("progress", { step })),
         );
       };
 
       const sendSuccess = (projectId: string) => {
         controller.enqueue(
-          encoder.encode(createProgressMessage("success", { projectId }))
+          encoder.encode(createProgressMessage("success", { projectId })),
         );
         controller.close();
       };
@@ -80,7 +86,7 @@ export async function GET(request: NextRequest) {
           });
         }
         controller.enqueue(
-          encoder.encode(createProgressMessage("error", { message }))
+          encoder.encode(createProgressMessage("error", { message })),
         );
         controller.close();
       };
@@ -107,9 +113,14 @@ export async function GET(request: NextRequest) {
 
         // Validate environment variables
         try {
-          validateEnvironment(['CSB_API_KEY']);
+          validateEnvironment(["CSB_API_KEY"]);
         } catch (error) {
-          sendError(error instanceof Error ? error.message : "Environment validation failed", "auth");
+          sendError(
+            error instanceof Error
+              ? error.message
+              : "Environment validation failed",
+            "auth",
+          );
           return;
         }
 
@@ -151,11 +162,14 @@ export async function GET(request: NextRequest) {
         });
 
         const csbService = getCodeSandboxService();
-        const sandbox = await csbService.createSandbox("sdk-example@latest", "private");
+        const sandbox = await csbService.createSandbox(
+          `sdk-example@${version}`, // Use the version parameter here
+          "private",
+        );
 
         sendProgress({
           id: "sandbox-create",
-          message: `Sandbox created: ${sandbox.id}`,
+          message: `Sandbox created: ${sandbox.id} (template: sdk-example@${version})`,
           status: "completed",
         });
 
@@ -191,7 +205,7 @@ export async function GET(request: NextRequest) {
           `git remote add origin https://github.com/${user.username}/${repo.data.name}.git`,
           {
             cwd: "/project/workspace/app",
-          }
+          },
         );
 
         sendProgress({
@@ -207,17 +221,17 @@ export async function GET(request: NextRequest) {
           status: "in_progress",
         });
 
-        await client.commands.run(
-          [
-            "git add .",
-            `git commit -m "Initial commit"`,
-            "git branch -M main",
-            "git push -u origin main",
-          ],
-          {
-            cwd: "/project/workspace/app",
-          }
-        );
+        // await client.commands.run(
+        //   [
+        //     "git add .",
+        //     `git commit -m "Initial commit"`,
+        //     "git branch -M main",
+        //     "git push -u origin main",
+        //   ],
+        //   {
+        //     cwd: "/project/workspace/app",
+        //   }
+        // );
 
         sendProgress({
           id: "git-push",
@@ -251,7 +265,7 @@ export async function GET(request: NextRequest) {
           name,
           sandbox.id,
           hostToken,
-          repo.data.html_url
+          repo.data.html_url,
         );
 
         sendProgress({
