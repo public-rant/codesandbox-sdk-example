@@ -1,0 +1,14 @@
+{
+  "name": "Devcontainer",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/codename-goose-cli:1": {}
+  },
+  "remoteEnv": {
+    "GOOSE_PROVIDER": "openai",
+    "GOOSE_MODEL": "gpt-4.1-mini",
+    "GOOSE_TEMPERATURE": 0.7,
+    "GOOSE_PLANNER_PROVIDER": "openai",
+    "GOOSE_PLANNER_MODEL": "o3-mini"
+  }
+}
