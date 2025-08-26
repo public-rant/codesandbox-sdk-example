@@ -1,0 +1,8 @@
+# Model Configuration
+GOOSE_PROVIDER: "openai"
+GOOSE_MODEL: "gpt-4.1-mini"
+GOOSE_TEMPERATURE: 0.7
+
+# Planning Configuration
+GOOSE_PLANNER_PROVIDER: "openai"
+GOOSE_PLANNER_MODEL: "o3-mini"

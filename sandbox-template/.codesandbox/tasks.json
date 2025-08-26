@@ -1,9 +1,17 @@
 {
   "setupTasks": [
-    "curl -fsSL https://code-server.dev/install.sh | sh",
+    "curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash",
     "cd app && npm install"
   ],
   "tasks": {
+    "goose-server": {
+      "name": "Goose Server",
+      "command": "goose web --port 4667",
+      "preview": {
+        "port": 4667
+      },
+      "runAtStart": true
+    },
     "dev-server": {
       "name": "Dev Server",
       "command": "cd app && npm run dev",
