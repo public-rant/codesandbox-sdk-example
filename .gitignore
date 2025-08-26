@@ -52,3 +52,5 @@ node_modules/
 
 *storybook.log
 storybook-static
+
+.zed/debug.json
