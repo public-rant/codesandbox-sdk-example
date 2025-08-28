@@ -34,6 +34,7 @@ export default defineConfig({
   },
 
   /* Configure projects for major browsers */
+
   projects: [
     {
       name: "black-thursday",
@@ -41,6 +42,11 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:4321",
+
+        // Move these into 'use' so they populate fixtures correctly
+        originalDomain: "https://tomorrows-ai.org",
+        originalSlug: "/scenario-page-7-copy/",
+        slug: "black-thursday",
       },
     },
   ],
