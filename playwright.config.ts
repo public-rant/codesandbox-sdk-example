@@ -36,8 +36,12 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: "black-thursday",
+      testMatch: "org.tomorrows-ai.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:4321",
+      },
     },
   ],
 
