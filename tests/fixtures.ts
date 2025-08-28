@@ -10,6 +10,8 @@ type MyFixtures = {
   originalDomain: string;
   originalSlug: string;
   slug: string;
+  originalSnapshot: string;
+  translatedSnapshot: string;
 };
 
 export const test = base.extend<MyFixtures>({
@@ -17,6 +19,14 @@ export const test = base.extend<MyFixtures>({
   originalDomain: ["https://tomorrows-ai.org", { option: true }],
   originalSlug: ["/", { option: true }],
   slug: ["/", { option: true }],
+  originalSnapshot: [
+    '- heading "Hello world" [level=2]', // Default: basic English heading
+    { option: true },
+  ],
+  translatedSnapshot: [
+    '- heading "Lorem ipsum" [level=2]', // Default: unrelated, intentionally fails translation
+    { option: true },
+  ],
 });
 
 export { expect };
